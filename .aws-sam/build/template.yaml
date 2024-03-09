@@ -9,7 +9,61 @@ Globals:
   Function:
     Timeout: 5
     MemorySize: 128
+  HttpApi:
+    CorsConfiguration:
+      AllowOrigins:
+      - '*'
+      MaxAge: 600
+    Auth:
+      Authorizers:
+        CognitoAuthorizer:
+          IdentitySource: $request.header.Authorization
+          JwtConfiguration:
+            issuer:
+              Fn::Sub: https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
+            audience:
+            - Ref: UserPoolClient
 Resources:
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: prajwalmarch9
+      UserPoolId:
+        Ref: UserPool
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: Helloworld-Dev
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      UsernameAttributes:
+      - email
+      AutoVerifiedAttributes:
+      - email
+      UsernameConfiguration:
+        CaseSensitive: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: HelloworldApplicationClient
+      UserPoolId:
+        Ref: UserPool
+      GenerateSecret: false
+      RefreshTokenValidity: 30
+      PreventUserExistenceErrors: ENABLED
+      ExplicitAuthFlows:
+      - ALLOW_USER_PASSWORD_AUTH
+      - ALLOW_REFRESH_TOKEN_AUTH
+  HelloWorldHttpApi:
+    Type: AWS::Serverless::HttpApi
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -22,27 +76,40 @@ Resources:
       Architectures:
       - x86_64
       Events:
-        CatchAll:
-          Type: Api
+        GreetPublic:
+          Type: HttpApi
+          Properties:
+            Path: /public/hello
+            Method: GET
+            ApiId:
+              Ref: HelloWorldHttpApi
+        Greet:
+          Type: HttpApi
           Properties:
             Path: /hello
             Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
+            ApiId:
+              Ref: HelloWorldHttpApi
       Environment:
         Variables:
           PARAM1: VALUE
 Outputs:
-  HelloWorldAPI:
-    Description: API Gateway endpoint URL for Prod environment for First Function
+  CognitoID:
+    Description: The Cognito UserPool ID
     Value:
-      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/
-  HelloWorldFunction:
-    Description: First Lambda Function ARN
+      Ref: UserPool
+  CognitoClientID:
+    Description: The Cognito UserPool Client ID
     Value:
-      Fn::GetAtt:
-      - HelloWorldFunction
-      - Arn
-  HelloWorldFunctionIamRole:
-    Description: Implicit IAM Role created for Hello World function
+      Ref: UserPoolClient
+  ListUrl:
+    Description: List API URL
+    Value:
+      Fn::Sub: https://${HelloWorldHttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/
+  HelloWorldFunctionArn:
+    Description: List Lambda Function ARN
     Value:
       Fn::GetAtt:
       - HelloWorldFunctionRole

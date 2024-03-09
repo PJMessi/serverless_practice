@@ -11,7 +11,65 @@ Globals:
     Timeout: 5
     MemorySize: 128
 
+  HttpApi:
+    CorsConfiguration:
+      AllowOrigins:
+        - "*"
+      MaxAge: 600
+    Auth:
+      Authorizers:
+        CognitoAuthorizer:
+          IdentitySource: $request.header.Authorization
+          JwtConfiguration:
+            issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
+            audience:
+              - !Ref UserPoolClient
+
 Resources:
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: prajwalmarch9
+      UserPoolId: !Ref UserPool
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: Helloworld-Dev
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: HelloworldApplicationClient
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      RefreshTokenValidity: 30
+      PreventUserExistenceErrors: ENABLED
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  HelloWorldHttpApi:
+    Type: AWS::Serverless::HttpApi
+    # Properties:
+    #   StageName: !Ref Env
+
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Metadata:
@@ -23,25 +81,37 @@ Resources:
       Architectures:
         - x86_64
       Events:
-        CatchAll:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        GreetPublic:
+          Type: HttpApi
+          Properties:
+            Path: /public/hello
+            Method: GET
+            ApiId:
+              Ref: HelloWorldHttpApi
+        Greet:
+          Type: HttpApi
           Properties:
             Path: /hello
             Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
+            ApiId:
+              Ref: HelloWorldHttpApi
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           PARAM1: VALUE
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldAPI:
-    Description: "API Gateway endpoint URL for Prod environment for First Function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: "First Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
+  CognitoID:
+    Description: The Cognito UserPool ID
+    Value: !Ref UserPool
+  CognitoClientID:
+    Description: The Cognito UserPool Client ID
+    Value: !Ref UserPoolClient
+  ListUrl:
+    Description: List API URL
+    Value: !Sub 'https://${HelloWorldHttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/'
+  HelloWorldFunctionArn:
+    Description: List Lambda Function ARN
     Value: !GetAtt HelloWorldFunctionRole.Arn
+
