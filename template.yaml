@@ -29,6 +29,11 @@ Globals:
               - !Ref UserPoolClient
 
 Resources:
+  HelloWorldSqsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: helloworldqueue
+
   UserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
@@ -101,6 +106,30 @@ Resources:
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           PARAM1: VALUE
+          HELLO_WORLD_SQS_QUEUE_URL: !Ref AWS::NoValue
+
+  HelloWorldQueueProcessorFunction:
+    Type: AWS::Serverless::Function 
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      CodeUri: hello-world-queue-processor/
+      Handler: bootstrap
+      Events:
+        HwSqsEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt HelloWorldSqsQueue.Arn
+            BatchSize: 2
+        Greet:
+          Type: HttpApi
+          Properties:
+            Path: /queue_processor
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
+            ApiId:
+              Ref: HelloWorldHttpApi
 
 Outputs:
   CognitoID:

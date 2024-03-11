@@ -27,6 +27,10 @@ Globals:
             audience:
             - Ref: UserPoolClient
 Resources:
+  HelloWorldSqsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: helloworldqueue
   UserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
@@ -96,6 +100,34 @@ Resources:
       Environment:
         Variables:
           PARAM1: VALUE
+          HELLO_WORLD_SQS_QUEUE_URL:
+            Ref: AWS::NoValue
+  HelloWorldQueueProcessorFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+      SamResourceId: HelloWorldQueueProcessorFunction
+    Properties:
+      CodeUri: HelloWorldQueueProcessorFunction
+      Handler: bootstrap
+      Events:
+        HwSqsEvent:
+          Type: SQS
+          Properties:
+            Queue:
+              Fn::GetAtt:
+              - HelloWorldSqsQueue
+              - Arn
+            BatchSize: 2
+        Greet:
+          Type: HttpApi
+          Properties:
+            Path: /queue_processor
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
+            ApiId:
+              Ref: HelloWorldHttpApi
 Outputs:
   CognitoID:
     Description: The Cognito UserPool ID
