@@ -116,11 +116,11 @@ Resources:
       CodeUri: hello-world-queue-processor/
       Handler: bootstrap
       Events:
-        HwSqsEvent:
-          Type: SQS
-          Properties:
-            Queue: !GetAtt HelloWorldSqsQueue.Arn
-            BatchSize: 2
+        # HwSqsEvent:
+        #   Type: SQS
+        #   Properties:
+        #     Queue: !GetAtt HelloWorldSqsQueue.Arn
+        #     BatchSize: 2
         Greet:
           Type: HttpApi
           Properties:

@@ -111,14 +111,6 @@ Resources:
       CodeUri: HelloWorldQueueProcessorFunction
       Handler: bootstrap
       Events:
-        HwSqsEvent:
-          Type: SQS
-          Properties:
-            Queue:
-              Fn::GetAtt:
-              - HelloWorldSqsQueue
-              - Arn
-            BatchSize: 2
         Greet:
           Type: HttpApi
           Properties:

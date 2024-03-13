@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
+
+type QueueMessageType struct {
+	BookName   string
+	AuthorName string
+}
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	var greeting string
@@ -23,25 +29,28 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	queueUrl := os.Getenv("HELLO_WORLD_SQS_QUEUE_URL")
 	log.Printf("Queue URL: %s", queueUrl)
 
-	svc := sqs.New(sess)
-	_, err := svc.SendMessage(&sqs.SendMessageInput{
-		DelaySeconds: aws.Int64(1),
-		MessageAttributes: map[string]*sqs.MessageAttributeValue{
-			"Title": {
-				DataType: aws.String("String"),
-				StringValue: aws.String("Harry Potter and the Philosopher's Stone"),
-			},
-			"Author": {
-				DataType: aws.String("String"),
-				StringValue: aws.String("J.K. Rowling"),
-			},
-		},
-		MessageBody: aws.String("Information about Books"),
-		QueueUrl: aws.String(queueUrl),
-	})
-
+	var queueData []QueueMessageType = []QueueMessageType{
+		{
+			BookName: "Harry Potter and the Philosopher's Stone",
+			AuthorName: "J.K. Rowling",
+		}, 
+	}
+	jsonData, err := json.Marshal(queueData)
 	if err != nil {
-		log.Printf("error while publishing to queue: %v", err)
+		log.Printf("error marshaling queue data: %s", err)
+	} else {
+		svc := sqs.New(sess)
+		_, err = svc.SendMessage(&sqs.SendMessageInput{
+			DelaySeconds: aws.Int64(1),
+			MessageBody:  aws.String(string(jsonData)),
+			QueueUrl:     aws.String(queueUrl),
+		})
+
+		if err != nil {
+			log.Printf("error while publishing to queue: %v", err)
+		} else {
+			log.Println("published to queue successfully")
+		}
 	}
 
 	if sourceIP == "" {
