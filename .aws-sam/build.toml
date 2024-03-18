@@ -27,4 +27,17 @@ functions = ["HelloWorldQueueProcessorFunction"]
 [function_build_definitions.67912de4-4814-4bfd-94c3-1feb2426c06a.metadata]
 BuildMethod = "go1.x"
 
+[function_build_definitions.1f41ddd2-63c9-45ef-9468-23d0417410bd]
+codeuri = "/Users/prajwalshrestha/projects/personal/go/serverless/helloworld/hello-world-authorizer"
+runtime = "provided.al2023"
+architecture = "x86_64"
+handler = "bootstrap"
+source_hash = "e2f3357ecb127a3d198cb24a5a31b08b8a303fa92e8e3eeffdcb6818b0c49872"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["HelloWorldAuthorizerFunction"]
+
+[function_build_definitions.1f41ddd2-63c9-45ef-9468-23d0417410bd.metadata]
+BuildMethod = "go1.x"
+
 [layer_build_definitions]

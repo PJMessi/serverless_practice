@@ -21,7 +21,17 @@ Globals:
       MaxAge: 600
     Auth:
       Authorizers:
+        HelloWorldAuthorizer:
+          FunctionArn: !GetAtt HelloWorldAuthorizerFunction.Arn
+          AuthorizerPayloadFormatVersion: "2.0"
+          Identity:
+            Headers:
+              - Authorization
+          EnableSimpleResponses: true
+
         CognitoAuthorizer:
+          AuthorizationScopes:
+            - "helloWorldResourceServer/customer"
           IdentitySource: $request.header.Authorization
           JwtConfiguration:
             issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
@@ -29,6 +39,16 @@ Globals:
               - !Ref UserPoolClient
 
 Resources:
+  LambdaPermissions:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt HelloWorldAuthorizerFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 
+          - "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiID}/authorizers/*"
+          - ApiID: !Ref HelloWorldHttpApi
+
   HelloWorldSqsQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -79,6 +99,14 @@ Resources:
     # Properties:
     #   StageName: !Ref Env
 
+  HelloWorldAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      CodeUri: hello-world-authorizer/
+      Handler: bootstrap
+
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Metadata:
@@ -100,7 +128,7 @@ Resources:
             Path: /hello
             Method: GET
             Auth:
-              Authorizer: CognitoAuthorizer
+              Authorizer: HelloWorldAuthorizer
             ApiId:
               Ref: HelloWorldHttpApi
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object

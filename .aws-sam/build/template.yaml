@@ -19,7 +19,19 @@ Globals:
       MaxAge: 600
     Auth:
       Authorizers:
+        HelloWorldAuthorizer:
+          FunctionArn:
+            Fn::GetAtt:
+            - HelloWorldAuthorizerFunction
+            - Arn
+          AuthorizerPayloadFormatVersion: '2.0'
+          Identity:
+            Headers:
+            - Authorization
+          EnableSimpleResponses: true
         CognitoAuthorizer:
+          AuthorizationScopes:
+          - helloWorldResourceServer/customer
           IdentitySource: $request.header.Authorization
           JwtConfiguration:
             issuer:
@@ -27,6 +39,20 @@ Globals:
             audience:
             - Ref: UserPoolClient
 Resources:
+  LambdaPermissions:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - HelloWorldAuthorizerFunction
+        - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub:
+        - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiID}/authorizers/*
+        - ApiID:
+            Ref: HelloWorldHttpApi
   HelloWorldSqsQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -72,6 +98,14 @@ Resources:
       - ALLOW_USER_SRP_AUTH
   HelloWorldHttpApi:
     Type: AWS::Serverless::HttpApi
+  HelloWorldAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+      SamResourceId: HelloWorldAuthorizerFunction
+    Properties:
+      CodeUri: HelloWorldAuthorizerFunction
+      Handler: bootstrap
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -94,7 +128,7 @@ Resources:
             Path: /hello
             Method: GET
             Auth:
-              Authorizer: CognitoAuthorizer
+              Authorizer: HelloWorldAuthorizer
             ApiId:
               Ref: HelloWorldHttpApi
       Environment:
