@@ -105,7 +105,7 @@ Resources:
       SamResourceId: HelloWorldAuthorizerFunction
     Properties:
       CodeUri: HelloWorldAuthorizerFunction
-      Handler: bootstrap
+      Handler: lambdas/bootstrap
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -113,7 +113,7 @@ Resources:
       SamResourceId: HelloWorldFunction
     Properties:
       CodeUri: HelloWorldFunction
-      Handler: bootstrap
+      Handler: lambdas/bootstrap
       Events:
         GreetPublic:
           Type: HttpApi
@@ -143,7 +143,7 @@ Resources:
       SamResourceId: HelloWorldQueueProcessorFunction
     Properties:
       CodeUri: HelloWorldQueueProcessorFunction
-      Handler: bootstrap
+      Handler: lambdas/bootstrap
       Events:
         Greet:
           Type: HttpApi
