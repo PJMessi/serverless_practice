@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sharedlambdacode/shared/util"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -19,6 +20,8 @@ type QueueMessageType struct {
 }
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	log.Printf("Current time: %s", util.GetCurrentTimeISO())
+
 	var greeting string
 	sourceIP := request.RequestContext.Identity.SourceIP
 

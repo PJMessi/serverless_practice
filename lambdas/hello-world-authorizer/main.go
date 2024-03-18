@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"sharedlambdacode/shared/util"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -26,6 +27,7 @@ var apis map[string]ApiAccessInfo = map[string]ApiAccessInfo{
 }
 
 func handler(request events.APIGatewayCustomAuthorizerRequestTypeRequest) (events.APIGatewayV2CustomAuthorizerSimpleResponse, error) {
+    log.Printf("Current time: %s", util.GetCurrentTimeISO())
 	reqJson, err := json.Marshal(request)
 	if err != nil {
 		log.Printf("could not marshal json: %s", err)

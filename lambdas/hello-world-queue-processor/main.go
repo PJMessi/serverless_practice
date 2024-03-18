@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"sharedlambdacode/shared/util"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -14,7 +15,7 @@ type QueueMessageType struct {
 }
 
 func handler(request events.SQSEvent) (events.APIGatewayProxyResponse, error) {
-    log.Println("Queue Processor Lamabda Invoked")
+    log.Printf("Current time: %s", util.GetCurrentTimeISO())
 
     recordsLen := len(request.Records)
     if recordsLen == 0 {
