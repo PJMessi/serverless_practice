@@ -1,15 +1,11 @@
 import './App.css';
 import { Amplify } from 'aws-amplify';
 import config from './amplifyconfiguration.json';
-import { signIn, fetchAuthSession, getCurrentUser, signOut, signUp } from 'aws-amplify/auth';
+import { signIn, fetchAuthSession, getCurrentUser, signOut } from 'aws-amplify/auth';
 import { useEffect, useState } from 'react';
 import { TextAreaField } from '@aws-amplify/ui-react';
 
 Amplify.configure(config)
-Amplify.configure({
-
-  
-})
 
 function App() {
   const [email, setEmail] = useState('pjmessi25@icloud.com');
@@ -47,24 +43,6 @@ function App() {
     setAuthToken('')
   }
 
-  const signUpUser = async () => {
-    const res = await signUp({
-      username: email,
-      password: password,
-      options: {
-        clientMetadata: {
-          SVGFECompositeElement
-        },
-
-        userAttributes: {
-          'custom:scopes': 'helloWorldResourceServer/merchant'
-        }
-      }
-    })
-
-    console.log('sign up response', JSON.stringify(res))
-  }
-
   const copyToClipboard = () => {
     const text = authToken;
     if (!navigator.clipboard) {
@@ -99,7 +77,7 @@ function App() {
         <input placeholder="password" type="text" value={password} onChange={(e) => setPassword(e.target.value)} />
         <br />
         {
-          !Boolean(user) ? <><button onClick={signUpUser}>Sign Up</button> <button onClick={signInUser}>Sign In</button> </> : <button onClick={signOutUser}>Sign Out</button>
+          !Boolean(user) ? <button onClick={signInUser}>Sign In</button> : <button onClick={signOutUser}>Sign Out</button>
         }
       </div>
 

@@ -105,7 +105,28 @@ Resources:
       SamResourceId: HelloWorldAuthorizerFunction
     Properties:
       CodeUri: HelloWorldAuthorizerFunction
-      Handler: lambdas/bootstrap
+      Handler: backend/cmd/lambdas/bootstrap
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+      SamResourceId: LoginFunction
+    Properties:
+      CodeUri: LoginFunction
+      Handler: backend/cmd/lambdas/bootstrap
+      Events:
+        GreetPublic:
+          Type: HttpApi
+          Properties:
+            Path: /auth/login
+            Method: POST
+            ApiId:
+              Ref: HelloWorldHttpApi
+      Environment:
+        Variables:
+          PARAM1: VALUE
+          HELLO_WORLD_SQS_QUEUE_URL:
+            Ref: AWS::NoValue
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -113,7 +134,7 @@ Resources:
       SamResourceId: HelloWorldFunction
     Properties:
       CodeUri: HelloWorldFunction
-      Handler: lambdas/bootstrap
+      Handler: backend/cmd/lambdas/bootstrap
       Events:
         GreetPublic:
           Type: HttpApi
@@ -136,24 +157,6 @@ Resources:
           PARAM1: VALUE
           HELLO_WORLD_SQS_QUEUE_URL:
             Ref: AWS::NoValue
-  HelloWorldQueueProcessorFunction:
-    Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: go1.x
-      SamResourceId: HelloWorldQueueProcessorFunction
-    Properties:
-      CodeUri: HelloWorldQueueProcessorFunction
-      Handler: lambdas/bootstrap
-      Events:
-        Greet:
-          Type: HttpApi
-          Properties:
-            Path: /queue_processor
-            Method: GET
-            Auth:
-              Authorizer: CognitoAuthorizer
-            ApiId:
-              Ref: HelloWorldHttpApi
 Outputs:
   CognitoID:
     Description: The Cognito UserPool ID

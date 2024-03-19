@@ -104,16 +104,36 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      CodeUri: lambdas/hello-world-authorizer/
-      Handler: lambdas/bootstrap
+      CodeUri: backend/cmd/lambdas/hello-world-authorizer/
+      Handler: backend/cmd/lambdas/bootstrap
+
+  LoginFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      CodeUri: backend/cmd/lambdas/loginlambda/
+      Handler: backend/cmd/lambdas/bootstrap
+      Events:
+        GreetPublic:
+          Type: HttpApi
+          Properties:
+            Path: /auth/login
+            Method: POST
+            ApiId:
+              Ref: HelloWorldHttpApi
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          PARAM1: VALUE
+          HELLO_WORLD_SQS_QUEUE_URL: !Ref AWS::NoValue
 
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Metadata:
       BuildMethod: go1.x
     Properties:
-      CodeUri: lambdas/hello-world/
-      Handler: lambdas/bootstrap
+      CodeUri: backend/cmd/lambdas/hello-world/
+      Handler: backend/cmd/lambdas/bootstrap
       Events:
         GreetPublic:
           Type: HttpApi
@@ -136,28 +156,28 @@ Resources:
           PARAM1: VALUE
           HELLO_WORLD_SQS_QUEUE_URL: !Ref AWS::NoValue
 
-  HelloWorldQueueProcessorFunction:
-    Type: AWS::Serverless::Function 
-    Metadata:
-      BuildMethod: go1.x
-    Properties:
-      CodeUri: lambdas/hello-world-queue-processor/
-      Handler: lambdas/bootstrap
-      Events:
-        # HwSqsEvent:
-        #   Type: SQS
-        #   Properties:
-        #     Queue: !GetAtt HelloWorldSqsQueue.Arn
-        #     BatchSize: 2
-        Greet:
-          Type: HttpApi
-          Properties:
-            Path: /queue_processor
-            Method: GET
-            Auth:
-              Authorizer: CognitoAuthorizer
-            ApiId:
-              Ref: HelloWorldHttpApi
+  # HelloWorldQueueProcessorFunction:
+  #   Type: AWS::Serverless::Function 
+  #   Metadata:
+  #     BuildMethod: go1.x
+  #   Properties:
+  #     CodeUri: backend/cmd/lambdas/hello-world-queue-processor/
+  #     Handler: backend/cmd/lambdas/bootstrap
+  #     Events:
+  #       # HwSqsEvent:
+  #       #   Type: SQS
+  #       #   Properties:
+  #       #     Queue: !GetAtt HelloWorldSqsQueue.Arn
+  #       #     BatchSize: 2
+  #       Greet:
+  #         Type: HttpApi
+  #         Properties:
+  #           Path: /queue_processor
+  #           Method: GET
+  #           Auth:
+  #             Authorizer: CognitoAuthorizer
+  #           ApiId:
+  #             Ref: HelloWorldHttpApi
 
 Outputs:
   CognitoID:
